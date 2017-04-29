@@ -22,11 +22,11 @@ int sine_data[10000];
 int main(void)
 {
     double max_arg = 2*pi;
-    double step = max_arg / (240);
+    double step = max_arg / (200);
     double arg = 0;
     int i = 0;
     sine_data[0] = sin(0) * ONE_VOLT;
-    for(i = 1; i < 240; i++){
+    for(i = 1; i < 200; i++){
         arg += step;
         sine_data[i] = sin(arg) * 2.5 * ONE_VOLT + 2.5 * ONE_VOLT;
     }
@@ -105,23 +105,23 @@ void TA0_0_IRQHandler(void) {
                TempDAC_Value = sine_data[isr_sine_count];//controls size of step
                Drive_DAC(TempDAC_Value);
                isr_sine_count ++;
-               if(isr_sine_count == 240){
+               if(isr_sine_count == 200){
                    isr_sine_count = 0;
                }
                if(frequency == 500){
-                   TIMER_A0->CCR[0] += 200;//enter isr about once time every 0.1ms
+                   TIMER_A0->CCR[0] += 240;//enter isr about once time every 0.1ms
                }
                else if(frequency == 400){
-                   TIMER_A0->CCR[0] += 250;//enter isr about once time every 0.1ms
+                   TIMER_A0->CCR[0] += 300;//enter isr about once time every 0.1ms
                }
                else if(frequency == 300){
-                   TIMER_A0->CCR[0] += 333;//enter isr about once time every 0.1ms
+                   TIMER_A0->CCR[0] += 400;//enter isr about once time every 0.1ms
                }
                else if(frequency == 200){
-                   TIMER_A0->CCR[0] += 500;//enter isr about once time every 0.1ms
+                   TIMER_A0->CCR[0] += 600;//enter isr about once time every 0.1ms
                }
                else if(frequency == 100){
-                   TIMER_A0->CCR[0] += 1000;//enter isr about once time every 0.1ms
+                   TIMER_A0->CCR[0] += 1200;//enter isr about once time every 0.1ms
                }
                break;
           default :
