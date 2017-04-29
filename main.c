@@ -16,55 +16,94 @@
 #define INT_ONCE_PER_MS 24000
 #define pi 3.14159265358979323846
 void interrupt_intit(int cctl);
-int waveform = SINE_WAVE;
+int waveform = 0;
 int frequency = 100;
+int duty_cycle = 50;
 int sine_data[10000];
 int main(void)
 {
+    //Initialize sine wave data
     int max_arg = 2*pi;
     int step = max_arg / (INT_ONCE_PER_MS / 10);
     int arg = 0;
     int i = 0;
+    /*
     sine_data[0] = sin(0) * ONE_VOLT;
     for(i = 1; i < INT_ONCE_PER_MS / 10; i++){
         arg += step;
-        sine_data[i] = sin(arg) * ONE_VOLT;
+        sine_data[i] = sin(arg) * ONE_VOLT + 2*ONE_VOLT + ONE_VOLT/2;
     }
-//start main
-//initialize sine wave value array
-//poll keypad for button press
-    WDT_A->CTL = WDT_A_CTL_PW | WDT_A_CTL_HOLD;   // Stop watchdog timer
-    // DCO = 24 MHz, SMCLK and MCLK = DCO
-    CS->KEY = CS_KEY_VAL;
-    CS->CTL0 = 0;
-    CS->CTL0 = CS_CTL0_DCORSEL_4;   // DCO = 24 MHz
-    CS->CTL1 = CS_CTL1_SELA_2 | CS_CTL1_SELS_3 | CS_CTL1_SELM_3;
-    CS->KEY = 0;
-    // Configure port bits for SPI
-    P4->DIR |= BIT1;        // Will use BIT4 to activate /CE on the DAC
-    P1SEL0 |= BIT6 + BIT5;  // Configure P1.6 and P1.5 for UCB0SIMO and UCB0CLK
-    P1SEL1 &= ~(BIT6 + BIT5);
-
-    // SPI Setup
-    EUSCI_B0->CTLW0 |= EUSCI_B_CTLW0_SWRST;// Put eUSCI state machine in reset
-    EUSCI_B0->CTLW0 = EUSCI_B_CTLW0_SWRST |//Remain eUSCI state machine in reset
-                      EUSCI_B_CTLW0_MST   |// Set as SPI master
-                      EUSCI_B_CTLW0_SYNC  |// Set as synchronous mode
-                      EUSCI_B_CTLW0_CKPL  |// Set clock polarity high
-                      EUSCI_B_CTLW0_MSB;   // MSB first
-
-    EUSCI_B0->CTLW0 |= EUSCI_B_CTLW0_SSEL__SMCLK; // SMCLK
-    // divide by 16, clock = fBRCLK/(UCBRx)
-    EUSCI_B0->BRW = 0x01;
-    // Initialize USCI state machine, SPI
-    EUSCI_B0->CTLW0 &= ~EUSCI_B_CTLW0_SWRST;
-    // now waiting for something to be placed in TXBUF
-    EUSCI_B0->IFG |= EUSCI_B_IFG_TXIFG;  // Clear TXIFG flag
-    //Timer setup including interrupt code
+    */
+    //poll keypad for button press
+    //Set up for DAC
+    DAC_init();
+    char key_pressed;
+    keypad_init();
     TimerA0_Init();
+    while(1){
+        key_pressed = poll_keys();
+        delayMs(500);
+        if(key_pressed > 0 & key_pressed <6){
+            switch(key_pressed){
+            case 1 :
+                frequency = 100;
+                break;
+            case 2 :
+                frequency = 200;
+                break;
+            case 3 :
+                frequency = 300;
+                break;
+            case 4 :
+                frequency = 400;
+                break;
+            case 5:
+                frequency = 500;
+                break;
+            default:
+                printf("YOU SHALL NOT PASS");
+            }
+        }
+        else if(key_pressed > 6 & key_pressed < 10){
+            switch(key_pressed){
+            case 7 :
+                waveform = SQUARE_WAVE;
+                break;
+            case 8 :
+                waveform = SAWTOOTH_WAVE;
+                break;
+            case 9 :
+                waveform = SINE_WAVE;
+                break;
+            default :
+                printf("do nothing");
+            }
+        }
+        else{
+            switch(key_pressed){
+            case 10 :
+                if(duty_cycle > 10){
+                    duty_cycle -= 10;
+                }
+                break;
+            case 11 :
+                duty_cycle = 50;
+                break;
+            case 12 :
+                if(duty_cycle < 90){
+                    duty_cycle += 10;
+                }
+                break;
+            default :
+                printf("do nothing");
+            }
 
+            waveform = SAWTOOTH_WAVE;
+        }
+    }
 
 } // end of main
+
 
 //Timer A0 ISR
 void TA0_0_IRQHandler(void) {
@@ -108,7 +147,7 @@ void TA0_0_IRQHandler(void) {
                TIMER_A0->CCR[0] += INT_ONCE_PER_MS / 10;//enter isr about once time every 0.1ms
 
           default :
-              printf ("Trevor is a bitch");
+              Drive_DAC(0);
 
       }
 
