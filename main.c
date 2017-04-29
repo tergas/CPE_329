@@ -143,11 +143,7 @@ void TA0_0_IRQHandler(void) {
               TIMER_A0->CCR[0] += (period / 100);//call ISR 100 times per period of the wave
               break;
           case SAWTOOTH_WAVE :
-              if (isr_square_count > 100 & isr_square_count < 200){//set to 2V for 10ms
-                  TempDAC_Value += (ONE_VOLT*5)/200;//controls size of step
-                  Drive_DAC(TempDAC_Value);
-              }
-              else if(isr_square_count <= 100){//set to 0V for 10ms
+              if (isr_square_count < 200){//set to 2V for 10ms
                   TempDAC_Value += (ONE_VOLT*5)/200;//controls size of step
                   Drive_DAC(TempDAC_Value);
               }
