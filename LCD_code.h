@@ -21,9 +21,9 @@
  */
 #include "msp.h"
 
-#define RS 1     /* P4.0 mask */
-#define RW 2     /* P4.1 mask */
-#define EN 4     /* P4.2 mask */
+#define RS 1     /* P5.0 mask */
+#define RW 2     /* P5.1 mask */
+#define EN 4     /* P5.2 mask */
 
 void delayMs(int n);
 void LCD_nibble_write(unsigned char data, unsigned char control);
@@ -33,6 +33,7 @@ void LCD_init(void);
 void Clear_LCD(void);
 void Home_LCD(void);
 void ShiftRight_LCD(void);
+void write_to_LCD(char word[]);
 
 void Clear_LCD(void){//clear the LCD
     LCD_command(1);
@@ -46,10 +47,21 @@ void ShiftRight_LCD(void){//shift cursor to the right
     LCD_command(0x06);
 }
 
+void write_to_LCD(char word[16]){
+    int i = 0;
+    LCD_command(1);//clear LCD
+    LCD_command(0x80);//set Cursor home
+    for(i = 0; i < sizeof(word); i++){
+        LCD_data(word[i]);
+    }
+   // Home_LCD();
+}
+
+
 ////////////////////////////////////BOOK CODE BELOW//////////////////////////////////////////////////////////////////////////
 
 void LCD_init(void) {
-    P4->DIR = 0xFF;     /* make P4 pins output for data and controls */
+    P5->DIR = 0xFF;     /* make P5 pins output for data and controls */
     delayMs(30);                /* initialization sequence */
     LCD_nibble_write(0x30, 0);
     delayMs(10);
@@ -72,11 +84,11 @@ void LCD_init(void) {
 void LCD_nibble_write(unsigned char data, unsigned char control) {
     data &= 0xF0;           /* clear lower nibble for control */
     control &= 0x0F;        /* clear upper nibble for data */
-    P4->OUT = data | control;       /* RS = 0, R/W = 0 */
-    P4->OUT = data | control | EN;  /* pulse E */
+    P5->OUT = data | control;       /* RS = 0, R/W = 0 */
+    P5->OUT = data | control | EN;  /* pulse E */
     delayMs(0);
-    P4->OUT = data;                 /* clear E */
-    P4->OUT = 0;
+    P5->OUT = data;                 /* clear E */
+    P5->OUT = 0;
 }
 
 void LCD_command(unsigned char command) {
