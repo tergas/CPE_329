@@ -16,7 +16,8 @@
  * on XMS432P401R Rev C.
  */
 #include "msp.h"
-int input;
+#include "DAC_code.h"
+#include "LCD_code.h"
 
 void UART0_init(void);
 
@@ -24,7 +25,7 @@ int main(void) {
     __disable_irq();
 
     UART0_init();
-
+    DAC_init();
     /* initialize P2.2-P2.0 for tri-color LEDs */
     P2->SEL1 &= ~7;           /* configure P2.2-P2.0 as simple I/O */
     P2->SEL0 &= ~7;
@@ -33,6 +34,8 @@ int main(void) {
     NVIC_SetPriority(EUSCIA0_IRQn, 4); /* set priority to 4 in NVIC */
     NVIC_EnableIRQ(EUSCIA0_IRQn);      /* enable interrupt in NVIC */
     __enable_irq();                    /* global enable IRQs */
+
+    Drive_DAC(0);
 
     while (1) {
     }
@@ -51,19 +54,37 @@ void UART0_init(void) {
 
 void EUSCIA0_IRQHandler(void) {
     static int i = 0;
-    if(EUSCI_A0->RXBUF >= 0 && EUSCI_A0->RXBUF <= 9){
-        input += (EUSCI_A0->RXBUF * 10^i);
-        i++;
+    static unsigned int in = 0;
+    static int input = 0;
+
+
+    while(!(EUSCI_A0->IFG & 0x01)) { }  /* wait until receive buffer is full */
+    in = EUSCI_A0->RXBUF;
+    if(i == 0 && (in >= 48 && in <= 57)){
+        input = 0;
     }
-    input += (EUSCI_A0->RXBUF * 10^i);
-    i++;
-    if(EUSCI_A0->RXBUF == 10){
+    //Drive_DAC(1000);
+    if(in >= 48 && in <= 57){ /*if input is between 0 and 9*/
+        input *= 10^i;
+        input += in-48;
+        i++;
+
+    }
+
+
+    if(in == 0xD){
         if(input < 4096){
-            drive_DAC(input);
+            Drive_DAC(input);
+            i = 0;
         }
     }
-    input[i] = EUSCI_A0->RXBUF;  /* read the receive char and set the LEDs */
+
+
     while(!(EUSCI_A0->IFG & 0x02)) { }  /* wait for transmit buffer empty */
-            EUSCI_A0->TXBUF = P2->OUT;              /* send a char */
+    EUSCI_A0->TXBUF = in;              /* send a char */
+
+
+
+
                                 /* interrupt flag is cleared by reading RXBUF */
 }
