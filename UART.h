@@ -12,6 +12,7 @@
 void UART0_init(void);
 void Write_to_terminal(char character);
 void UART_INIT_init(void);
+void newLine(void);
 
 void UART0_init(void) {
     EUSCI_A0->CTLW0 |= 1;     /* put in reset mode for config */
@@ -32,4 +33,10 @@ void UART_INT_init(void){
     EUSCI_A0->IE |= 1;        /* enable receive interrupt */
 }
 
+void newLine(void){
+    while(!(EUSCI_A0->IFG & 0x02)) { }  /* wait until receive buffer is full */
+    EUSCI_A0-> TXBUF = 10;
+    while(!(EUSCI_A0->IFG & 0x02)) { }  /* wait until receive buffer is full */
+    EUSCI_A0-> TXBUF = 13;
+}
 #endif /* UART_H_ */

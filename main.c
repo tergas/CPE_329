@@ -70,7 +70,7 @@
 //******************************************************************************
 #include "msp.h"
 #include "UART.h"
-#define TEN_MILI_VOLTS 49
+#define TEN_MILI_VOLTS 49.3
 static int ADC_UPDATED = 1;//static variable to limit scope to this file
 static int ADC_VALUE = 0;
 static int calibrated_adc_val;
@@ -116,6 +116,7 @@ int main(void) {
         // Start sampling/conversion
         if(ADC_UPDATED){
             calibrated_adc_val = calibrate_ADC_VALUE();
+            print_value_to_terminal();
             ADC14->CTL0 |= ADC14_CTL0_ENC | ADC14_CTL0_SC;
             ADC_UPDATED = 0;
         }
@@ -142,11 +143,12 @@ void print_value_to_terminal(int num){
         }
         else{
             int temp = num/divider;
-            Write_to_terminal((char) temp);
+            Write_to_terminal((char)temp+48);
+            num %= divider;
             divider /= 10;
-            num %= 10;
         }
     }
+    newLine();
 }
 
 // ADC14 interrupt service routine
