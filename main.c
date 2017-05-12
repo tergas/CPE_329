@@ -80,80 +80,80 @@ int Get_ADC_VALUE();
 int calibrate_ADC_VALUE(void);
 
 int main(void) {
-    volatile unsigned int i;
+	volatile unsigned int i;
 
-    WDT_A->CTL = WDT_A_CTL_PW |             // Stop WDT
-                 WDT_A_CTL_HOLD;
+	WDT_A->CTL = WDT_A_CTL_PW |             // Stop WDT
+		WDT_A_CTL_HOLD;
 
-    // GPIO Setup
-    P1->OUT &= ~BIT0;                       // Clear LED to start
-    P1->DIR |= BIT0;                        // Set P1.0/LED to output
-    P5->SEL1 |= BIT4;                       // Configure P5.4 for ADC
-    P5->SEL0 |= BIT4;
+	// GPIO Setup
+	P1->OUT &= ~BIT0;                       // Clear LED to start
+	P1->DIR |= BIT0;                        // Set P1.0/LED to output
+	P5->SEL1 |= BIT4;                       // Configure P5.4 for ADC
+	P5->SEL0 |= BIT4;
 
-    // Enable global interrupt
-    __enable_irq();
+	// Enable global interrupt
+	__enable_irq();
 
-    // Enable ADC interrupt in NVIC module
-    NVIC->ISER[0] = 1 << ((ADC14_IRQn) & 31);
+	// Enable ADC interrupt in NVIC module
+	NVIC->ISER[0] = 1 << ((ADC14_IRQn) & 31);
 
-    // Sampling time, S&H=16, ADC14 on
-    ADC14->CTL0 = ADC14_CTL0_SHT0_2 | ADC14_CTL0_SHP | ADC14_CTL0_ON;
-    ADC14->CTL1 = ADC14_CTL1_RES_3;         // Use sampling timer, 14-bit conversion results
+	// Sampling time, S&H=16, ADC14 on
+	ADC14->CTL0 = ADC14_CTL0_SHT0_2 | ADC14_CTL0_SHP | ADC14_CTL0_ON;
+	ADC14->CTL1 = ADC14_CTL1_RES_3;         // Use sampling timer, 14-bit conversion results
 
-    ADC14->MCTL[0] |= ADC14_MCTLN_INCH_1;   // A1 ADC input select; Vref=AVCC
-    ADC14->IER0 |= ADC14_IER0_IE0;          // Enable ADC conv complete interrupt
+	ADC14->MCTL[0] |= ADC14_MCTLN_INCH_1;   // A1 ADC input select; Vref=AVCC
+	ADC14->IER0 |= ADC14_IER0_IE0;          // Enable ADC conv complete interrupt
 
-    SCB->SCR &= ~SCB_SCR_SLEEPONEXIT_Msk;   // Wake up on exit from ISR
+	SCB->SCR &= ~SCB_SCR_SLEEPONEXIT_Msk;   // Wake up on exit from ISR
 
-    UART0_init();//set up UART to write to terminal
-    Write_to_terminal('B');
+	UART0_init();//set up UART to write to terminal
+	Write_to_terminal('B');
 
-    while (1)
-    {
-        for (i = 20000; i > 0; i--);        // Delay
+	while (1)
+	{
+		for (i = 20000; i > 0; i--);        // Delay
 
-        // Start sampling/conversion
-        if(ADC_UPDATED){
-            calibrated_adc_val = calibrate_ADC_VALUE();
-            print_value_to_terminal();
-            ADC14->CTL0 |= ADC14_CTL0_ENC | ADC14_CTL0_SC;
-            ADC_UPDATED = 0;
-        }
+		// Start sampling/conversion
+		if(ADC_UPDATED){
+			calibrated_adc_val = calibrate_ADC_VALUE();
+			print_value_to_terminal();
+			ADC14->CTL0 |= ADC14_CTL0_ENC | ADC14_CTL0_SC;
+			ADC_UPDATED = 0;
+		}
 
-    }
+	}
 }
 
 int Check_ADC(void){
-    return ADC_UPDATED;
+	return ADC_UPDATED;
 }
 
 int calibrate_ADC_VALUE(void){
-    float temp = (ADC_VALUE / TEN_MILI_VOLTS)*10;
-    (int) temp;
-    return temp;
+	float temp = (ADC_VALUE / TEN_MILI_VOLTS)*10;
+	(int) temp;
+	return temp;
 }
 
 void print_value_to_terminal(int num){
-    int i;
-    int divider = 1000;
-    for(i=0; i< 4; i++){
-        if(i == 1){
-            Write_to_terminal('.');
-        }
-        else{
-            int temp = num/divider;
-            Write_to_terminal((char)temp+48);
-            num %= divider;
-            divider /= 10;
-        }
-    }
-    newLine();
+	int i;
+	int divider = 1000;
+	for(i=0; i< 4; i++){
+		if(i == 1){
+			Write_to_terminal('.');
+		}
+		else{
+			int temp = num/divider;
+			Write_to_terminal((char)temp+48);
+			num %= divider;
+			divider /= 10;
+		}
+	}
+	newLine();
 }
 
 // ADC14 interrupt service routine
 void ADC14_IRQHandler(void) {
-   // int ADC_val;
-    ADC_VALUE = ADC14->MEM[0];//1240 = 1 Volt
-    ADC_UPDATED = 1;
+	// int ADC_val;
+	ADC_VALUE = ADC14->MEM[0];//1240 = 1 Volt
+	ADC_UPDATED = 1;
 }
