@@ -12,9 +12,13 @@
 #include "UART.h"
 #include "delays.h"
 
-#define SAMPLING_FREQ 2.5589
+#define SAMPLING_FREQ 2500//hz
+//9328
+//2.55889khz
 #define TEN_MILI_VOLTS 49.3//used to convert ADC_VALUE to a voltage
-#define DATA_SIZE 2500
+#define DATA_SIZE 10000
+
+//make data size a variable than can be changed by fill buffer
 
 //static variable to limit scope to this file
 static int ADC_UPDATED = 0;//flag that gets raised when ADC gets a new value
@@ -27,9 +31,10 @@ int Check_ADC(void);
 int Get_ADC_VALUE();
 int calibrate_ADC_VALUE(void);
 void print_value_to_terminal(int num);
-int find_DC_avg(void);
+int find_DC_avg(int numSamples);
 void fillBuffer(void);
 void ADC_init(void);
+int calcFrequency(int offset);
 
 
 void ADC_init(void){
@@ -52,6 +57,7 @@ void ADC_init(void){
 }
 //fills ADC_BUFFER with 1 second of data sampled at Fs ~ 2.5Khz
 void fillBuffer(void){
+    ADC_UPDATED = 0;
     while(ADC_UPDATED == 0){
                ADC14->CTL0 |= ADC14_CTL0_ENC | ADC14_CTL0_SC;
        }
@@ -59,13 +65,43 @@ void fillBuffer(void){
 
 
 
-int find_DC_avg(void){
-    int i = 0;
+int find_DC_avg(int numSamples){
+    int i = 50;
     int sum = 0;
-    for(i = 0; i < DATA_SIZE; i++){
+    for(i = 0; i < numSamples; i++){
         sum += ADC_BUFFER[i];
     }
-    return (int) sum/DATA_SIZE;
+    return (int) sum/numSamples;
+}
+
+int calcFrequency(int offset){
+    int firstCrossing = 0;
+    int secondCrossing = 0;
+    int firstCrossingFound = 0;
+    int secondCorssingFound = 0;
+    int i = 50;
+    while(firstCrossingFound == 0){
+        if((offset - 55) < ADC_BUFFER[i] && ADC_BUFFER[i] < (offset +55)){
+            firstCrossing = i;
+            firstCrossingFound = 1;
+        }
+        i++;
+    }
+    i = firstCrossing +1;
+    while(secondCorssingFound == 0){
+            if((offset - 55) < ADC_BUFFER[i] && ADC_BUFFER[i] < (offset +55)){
+                secondCrossing = i;
+                secondCorssingFound = 1;
+            }
+            i++;
+    }
+    return secondCrossing - firstCrossing;
+    //int samplesBetweenPeaks = maxIndex2 - maxIndex;
+    //float period = (1/SAMPLING_FREQ) * samplesBetweenPeaks;
+    //int freq = 1/period;
+    //return freq;
+
+
 }
 
 //checks if ADC is updated, ADC_UPDATED can be accessed from other files
@@ -101,7 +137,32 @@ void print_value_to_terminal(int num){
     newLine();
 }
 
+// ADC14 interrupt service routine
+void ADC14_IRQHandler(void) {
+    // int ADC_val;
+    static int count = 0;
+    static int ADC_uptate_count = 0;
+    //dummy variable used to make else logic take the same amount of time as the else if
+    int temp = 0;
 
+    if(count == DATA_SIZE * 2){
+        count = 0;
+        ADC_UPDATED = 1;
+        ADC_uptate_count ++;
+    }
+    else if (count % 2 == 0){
+        P3->OUT |= BIT0;
+        ADC_BUFFER[count / 2] = ADC14->MEM[0];
+        //ADC_UPDATED = 0;
+        count ++;
+        P3->OUT &= ~BIT0;
+    }
+    else{
+        temp = ADC14->MEM[0];
+        //ADC_UPDATED = 0;
+        count ++;
+    }
+}
 
 
 

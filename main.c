@@ -11,26 +11,31 @@
 
 #define DC_MODE 0
 #define AC_MODE 1
-#define SAMPLING_RATE
+#define SAMPLING_RATE 9690//hz
+#define SAMPLING_PERIOD 0.0001032//seconds
+#define ONE_MILI_VOLT 4.94
 
 void set_mode(int m);
 
-static int mode = DC_MODE;
+static int mode = AC_MODE;
 static int DC_Data[];
 void main(void)
 {
     volatile unsigned int i;
+    int DCavg = 0;
+    float freq = 0;
+    int DCoffset = 0;
     //setting up P3.0 for simple GPIO to Measure Sampling Rate
     P3->DIR |= BIT0;
     P3->OUT |= BIT0;
 
     //set SMCLK to 1.5Mhz
-    set_DCO(FREQ_1_5_MHz);
+    set_DCO(FREQ_3_MHz);
 
     //set up ADC
     ADC_init();
 
-    //Sample for 1 second at 2.5Khz
+    //Sample for 1 second at 10Khz
     fillBuffer();
 
     // Enable global interrupt
@@ -38,6 +43,32 @@ void main(void)
 
     while (1){
         //do nothing
+        switch(mode){
+        case (DC_MODE) :
+                //fill buffer, take first 10ms of buffer(250 samples)
+                //and compute the average.  Print value to terminal
+                DCavg = (int)((find_DC_avg(250)) / ONE_MILI_VOLT);//(ADC_VALUE / TEN_MILI_VOLTS)*10;
+                //print value to terminal
+                fillBuffer();//see if i can make this faster
+                break;
+        case (AC_MODE) :
+                //fill buffer(takes 1 second);
+                DCoffset = (find_DC_avg(9000));
+                fillBuffer();
+                //find DC Offset
+                //calculate frequency
+                //freq = 1/(SAMPLING_PERIOD * calcFrequency());
+                //freq = 4;
+                freq = calcFrequency(DCoffset);
+
+                //freq = calcFrequency();
+                //choose RMS time based on frequency
+                //DC offset calculation, Peak-to-Peak, and RMS calculation
+                //print values to terminal
+                break;
+        default :
+                printf("do nothing");
+        }
     }
 }
 
@@ -45,38 +76,8 @@ void set_mode(int m){
     mode = m;
 }
 
-// ADC14 interrupt service routine
-void ADC14_IRQHandler(void) {
-    // int ADC_val;
-    static int count = 0;
-    static int ADC_uptate_count = 0;
-    //dummy variable used to make else logic take the same amount of time as the else if
-    int temp = 0;
 
-    if(count == DATA_SIZE * 4){
-        count = 0;
-        ADC_UPDATED = 1;
-        ADC_uptate_count ++;
-    }
-    else if (count % 4 == 0){
-        P3->OUT |= BIT0;
-        ADC_BUFFER[count / 4] = ADC14->MEM[0];
-        //ADC_UPDATED = 0;
-        count ++;
-        P3->OUT &= ~BIT0;
-    }
-    else{
-        temp = ADC14->MEM[0];
-        ADC_UPDATED = 0;
-        count ++;
-    }
-}
-    /*
-    P3->OUT |= BIT0;
-    ADC_VALUE = ADC14->MEM[0];//1240 = 1 Volt
-    ADC_UPDATED = 1;
-    P3->OUT &= ~BIT0;
-    */
+
 
 
 
