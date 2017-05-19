@@ -32,7 +32,7 @@ void main(void)
     P3->OUT |= BIT0;
 
     //set SMCLK to 1.5Mhz
-    set_DCO(FREQ_1_5_MHz);
+    set_DCO(FREQ_3_MHz);
 
     //set up ADC
     ADC_init();
