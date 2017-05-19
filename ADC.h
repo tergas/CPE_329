@@ -38,6 +38,7 @@ void fillBuffer(void);
 void ADC_init(void);
 int calcFrequency(int offset);
 int calcACvals(int offset);
+float getDCAvg(void);
 
 
 void ADC_init(void){
@@ -81,6 +82,7 @@ static float freq = 0;
 static float Vpp = 0;
 static float VrmsTrue = 0;
 static float VrmsCalc = 0;
+static int DC_avg = 0;
 
 void calACvals(int offset){
     int i = 0;
@@ -94,6 +96,7 @@ void calACvals(int offset){
         int Vmin = 100000;
         int trueSum = 0;
         int calcSum = 0;
+        int DCSum = 0;
         for(i = 1; i < DATA_SIZE; i++){
             //Freg Calcs
             prevVal = ADC_BUFFER[i-1];
@@ -118,6 +121,7 @@ void calACvals(int offset){
             if(crossingAxis <= 145){
                 trueSum += (currentVal / ONE_MILI_VOLT) * (currentVal / ONE_MILI_VOLT);
                 calcSum += ((currentVal - offset) / ONE_MILI_VOLT) * ((currentVal - offset) / ONE_MILI_VOLT);
+                DCSum += (currentVal / ONE_MILI_VOLT);
                 rmsCount ++;
             }
             //end TrueRMS calcs
@@ -128,6 +132,7 @@ void calACvals(int offset){
          Vpp = Vmax - Vmin - 20;
          VrmsTrue = sqrt(trueSum / rmsCount);
          VrmsCalc = sqrt(calcSum / rmsCount);
+         DC_avg = DCSum/rmsCount;
 
 }
 
@@ -148,6 +153,9 @@ float getVRMS_CALC(void){
     return VrmsCalc;
 }
 
+float getDCAvg(void){
+    return DC_avg;
+}
 /*int calcFrequency(int offset){
     int i = 0;
     int currentVal = 0;

@@ -21,12 +21,13 @@ void setCalc(void);
 void setTrue(void);
 void setFreq(void);
 void setDCGraph(void);
+void setCalcGraph(void);
 
 void UART0_init(void) {
     EUSCI_A0->CTLW0 |= 1;     /* put in reset mode for config */
     EUSCI_A0->MCTLW = 0;      /* disable oversampling */
     EUSCI_A0->CTLW0 = 0x0081; /* 1 stop bit, no parity, SMCLK, 8-bit data */
-    EUSCI_A0->BRW = 26;       /* 24000000 / 115200 = 1250 */
+    EUSCI_A0->BRW = 1250;       /* 24000000 / 115200 = 1250 */
     P1->SEL0 |= 0x0C;         /* P1.3, P1.2 for UART */
     P1->SEL1 &= ~0x0C;
     EUSCI_A0->CTLW0 &= ~1;    /* take UART out of reset mode */
@@ -258,6 +259,33 @@ void setDCGraph(void){
     EUSCI_A0->TXBUF = '1';
     while(!(EUSCI_A0->IFG & 0x02)) { }
     EUSCI_A0->TXBUF = '1';
+    while(!(EUSCI_A0->IFG & 0x02)) { }
+    EUSCI_A0->TXBUF = ';';
+    while(!(EUSCI_A0->IFG & 0x02)) { }
+    EUSCI_A0->TXBUF = '1';
+    while(!(EUSCI_A0->IFG & 0x02)) { }
+    EUSCI_A0->TXBUF = '3';
+    while(!(EUSCI_A0->IFG & 0x02)) { }
+    EUSCI_A0->TXBUF = 'f';
+    while(!(EUSCI_A0->IFG & 0x02)) { }
+    EUSCI_A0->TXBUF = ESC;
+    while(!(EUSCI_A0->IFG & 0x02)) { }
+    EUSCI_A0->TXBUF = '[';
+    while(!(EUSCI_A0->IFG & 0x02)) { }
+    EUSCI_A0->TXBUF = '0';
+    while(!(EUSCI_A0->IFG & 0x02)) { }
+    EUSCI_A0->TXBUF = 'K';
+}
+
+void setCalcGraph(void){
+    while(!(EUSCI_A0->IFG & 0x02)) { }
+    EUSCI_A0->TXBUF = ESC;
+    while(!(EUSCI_A0->IFG & 0x02)) { }
+    EUSCI_A0->TXBUF = '[';
+    while(!(EUSCI_A0->IFG & 0x02)) { }
+    EUSCI_A0->TXBUF = '1';
+    while(!(EUSCI_A0->IFG & 0x02)) { }
+    EUSCI_A0->TXBUF = '0';
     while(!(EUSCI_A0->IFG & 0x02)) { }
     EUSCI_A0->TXBUF = ';';
     while(!(EUSCI_A0->IFG & 0x02)) { }

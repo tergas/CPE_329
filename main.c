@@ -20,6 +20,7 @@ void printFreq(int out);
 void printP2P(int out);
 void printRMSTrue(int out);
 void printDCGraph(int out);
+void printCalcGraph(int out);
 
 static int mode = AC_MODE;
 static int DC_Data[];
@@ -45,21 +46,27 @@ void main(void)
 
 
 
-    //set SMCLK to 1.5Mhz
+    //set SMCLK to 24Mhz
     set_DCO(FREQ_3_MHz);
 
-    //initialize UART
-    UART0_init();
+
+
 
     //Print screen for DMM
-    clearScreen();
-    setupScreen();
+
 
     //set up ADC
     ADC_init();
 
     //Sample for 1 second at 10Khz
     fillBuffer();
+    set_DCO(FREQ_24_MHz);
+    //initialize UART
+    UART0_init();
+    //Print screen for DMM
+    clearScreen();
+    setupScreen();
+
 
     // Enable global interrupt
     __enable_irq();
@@ -79,16 +86,21 @@ void main(void)
 
                 DCoffset = (find_DC_avg(9000));
                 dcOut = (int)(DCoffset / ONE_MILI_VOLT) + 1;//(ADC_VALUE / TEN_MILI_VOLTS)*10;
+
+                set_DCO(FREQ_3_MHz);
+                fillBuffer();
+                set_DCO(FREQ_24_MHz);
                 setDC();
                 printP2P(dcOut);
                 setDCGraph();
                 printDCGraph(dcOut);
-                fillBuffer();
                 //find DC Offset
                 //calculate frequency
                 //freq = 1/(SAMPLING_PERIOD * calcFrequency());
                 //freq = 4;
                 calACvals(DCoffset);
+                //dcOut = (int)getDCAvg();
+
                 freq = getFreq() / TIME_TO_FILL_BUFFER;
                 freqOut = (int)freq;
                 setFreq();
@@ -105,6 +117,8 @@ void main(void)
                 rmsCalcOut = (int)VRMSCalc;
                 setCalc();
                 printP2P(rmsCalcOut);
+                setCalcGraph();
+                printCalcGraph(rmsCalcOut);
 
                 //freq = calcFrequency();
                 //choose RMS time based on frequency
@@ -223,6 +237,15 @@ void printDCGraph(int out){
     int i;
     float voltage = out;
     for(i = 0; i< (int)(voltage/3300*50); i++){
+        while(!(EUSCI_A0->IFG & 0x02)) { }
+        EUSCI_A0->TXBUF = '|';
+    }
+}
+
+void printCalcGraph(int out){
+    int i;
+    float voltage = out;
+    for(i = 0; i< (int)(voltage/1650*50); i++){
         while(!(EUSCI_A0->IFG & 0x02)) { }
         EUSCI_A0->TXBUF = '|';
     }
