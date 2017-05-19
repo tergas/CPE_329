@@ -85,7 +85,7 @@ void main(void)
                 //fill buffer(takes 1 second);
 
                 DCoffset = (find_DC_avg(9000));
-                dcOut = (int)(DCoffset / ONE_MILI_VOLT) + 1;//(ADC_VALUE / TEN_MILI_VOLTS)*10;
+                dcOut = (int)(DCoffset / ONE_MILI_VOLT);//(ADC_VALUE / TEN_MILI_VOLTS)*10;
 
                 set_DCO(FREQ_3_MHz);
                 fillBuffer();
@@ -105,7 +105,7 @@ void main(void)
                 VPeakToPeak = getVpp() / ONE_MILI_VOLT;
                 p2pOut = (int)VPeakToPeak;
                 setPeak();
-                printP2P(p2pOut);
+                printP2P(p2pOut-20);
                 VRMSTrue = getVRMS_TRUE();
                 rmsTrueOut = (int)VRMSTrue;
                 setTrue();
