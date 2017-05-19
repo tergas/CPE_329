@@ -11,8 +11,8 @@
 
 #define DC_MODE 0
 #define AC_MODE 1
-#define SAMPLING_RATE 9690//hz
-#define SAMPLING_PERIOD 0.0001032//seconds
+//  #define SAMPLING_RATE 9690//hz
+// #define SAMPLING_PERIOD 0.0001032//seconds
 #define ONE_MILI_VOLT 4.94
 
 void set_mode(int m);
@@ -26,6 +26,7 @@ void main(void)
     float freq = 0;
     float VPeakToPeak = 0;
     float VRMSTrue = 0;
+    float VRMSCalc = 0;
     int DCoffset = 0;
     //setting up P3.0 for simple GPIO to Measure Sampling Rate
     P3->DIR |= BIT0;
@@ -65,6 +66,7 @@ void main(void)
                 freq = getFreq() / TIME_TO_FILL_BUFFER;
                 VPeakToPeak = getVpp() / ONE_MILI_VOLT;
                 VRMSTrue = getVRMS_TRUE();
+                VRMSCalc = getVRMS_CALC();
                 //freq = calcFrequency();
                 //choose RMS time based on frequency
                 //DC offset calculation, Peak-to-Peak, and RMS calculation

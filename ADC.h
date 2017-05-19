@@ -81,6 +81,7 @@ int find_DC_avg(int numSamples){
 static float freq = 0;
 static float Vpp = 0;
 static float VrmsTrue = 0;
+static float VrmsCalc = 0;
 
 void calACvals(int offset){
     int i = 0;
@@ -92,7 +93,8 @@ void calACvals(int offset){
         //float freq = 0;
         int Vmax = 0;
         int Vmin = 100000;
-        int sum = 0;
+        int trueSum = 0;
+        int calcSum = 0;
         for(i = 1; i < DATA_SIZE; i++){
             //Freg Calcs
             prevVal = ADC_BUFFER[i-1];
@@ -115,7 +117,8 @@ void calACvals(int offset){
             }//end Vpp Calcs
             //TrueRMS calcs
             if(crossingAxis == 2){
-                sum += (currentVal / ONE_MILI_VOLT) * (currentVal / ONE_MILI_VOLT);
+                trueSum += (currentVal / ONE_MILI_VOLT) * (currentVal / ONE_MILI_VOLT);
+                calcSum += ((currentVal - offset) / ONE_MILI_VOLT) * ((currentVal - offset) / ONE_MILI_VOLT);
                 rmsCount ++;
             }
             //end TrueRMS calcs
@@ -124,7 +127,8 @@ void calACvals(int offset){
          //value in ADC terms needs to be converted to voltage
          //minus 20 to compensate for noise spikes
          Vpp = Vmax - Vmin - 20;
-         VrmsTrue = 50;
+         VrmsTrue = sqrt(trueSum / rmsCount);
+         VrmsCalc = sqrt(calcSum / rmsCount);
 
 }
 
@@ -139,6 +143,10 @@ float getVpp(void){
 
 float getVRMS_TRUE(void){
     return VrmsTrue;
+}
+
+float getVRMS_CALC(void){
+    return VrmsCalc;
 }
 
 /*int calcFrequency(int offset){
@@ -178,7 +186,7 @@ int calibrate_ADC_VALUE(void){
   terminal. prints in format "X.YZ".  For example passing
   2350 into function would print "2.35" to the terminal.
 */
-void print_value_to_terminal(int num){
+/*void print_value_to_terminal(int num){
     int i;
     int divider = 1000;
     for(i=0; i< 4; i++){
@@ -194,6 +202,7 @@ void print_value_to_terminal(int num){
     }
     newLine();
 }
+*/
 
 // ADC14 interrupt service routine
 void ADC14_IRQHandler(void) {
