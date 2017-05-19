@@ -24,13 +24,15 @@ void main(void)
     volatile unsigned int i;
     int DCavg = 0;
     float freq = 0;
+    float VPeakToPeak = 0;
+    float VRMSTrue = 0;
     int DCoffset = 0;
     //setting up P3.0 for simple GPIO to Measure Sampling Rate
     P3->DIR |= BIT0;
     P3->OUT |= BIT0;
 
     //set SMCLK to 1.5Mhz
-    set_DCO(FREQ_3_MHz);
+    set_DCO(FREQ_1_5_MHz);
 
     //set up ADC
     ADC_init();
@@ -59,8 +61,10 @@ void main(void)
                 //calculate frequency
                 //freq = 1/(SAMPLING_PERIOD * calcFrequency());
                 //freq = 4;
-                freq = calcFrequency(DCoffset);
-
+                calACvals(DCoffset);
+                freq = getFreq() / TIME_TO_FILL_BUFFER;
+                VPeakToPeak = getVpp() / ONE_MILI_VOLT;
+                VRMSTrue = getVRMS_TRUE();
                 //freq = calcFrequency();
                 //choose RMS time based on frequency
                 //DC offset calculation, Peak-to-Peak, and RMS calculation

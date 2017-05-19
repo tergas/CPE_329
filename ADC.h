@@ -11,12 +11,14 @@
 #include "msp.h"
 #include "UART.h"
 #include "delays.h"
+#include <math.h>
 
-#define SAMPLING_FREQ 2500//hz
-//9328
-//2.55889khz
+#define SAMPLING_FREQ 9311//hz
+
 #define TEN_MILI_VOLTS 49.3//used to convert ADC_VALUE to a voltage
 #define DATA_SIZE 10000
+#define TIME_TO_FILL_BUFFER 1.073998496
+#define ONE_MILI_VOLT 4.94
 
 //make data size a variable than can be changed by fill buffer
 
@@ -35,6 +37,7 @@ int find_DC_avg(int numSamples);
 void fillBuffer(void);
 void ADC_init(void);
 int calcFrequency(int offset);
+int calcACvals(int offset);
 
 
 void ADC_init(void){
@@ -73,36 +76,90 @@ int find_DC_avg(int numSamples){
     }
     return (int) sum/numSamples;
 }
+////Functions for Calculating AC MEasurements (freq, Vpp, RMS, ect..)
+static float freq = 0;
+static float Vpp = 0;
+static float VrmsTrue = 0;
 
-int calcFrequency(int offset){
-    int firstCrossing = 0;
-    int secondCrossing = 0;
-    int firstCrossingFound = 0;
-    int secondCorssingFound = 0;
-    int i = 50;
-    while(firstCrossingFound == 0){
-        if((offset - 55) < ADC_BUFFER[i] && ADC_BUFFER[i] < (offset +55)){
-            firstCrossing = i;
-            firstCrossingFound = 1;
-        }
-        i++;
-    }
-    i = firstCrossing +1;
-    while(secondCorssingFound == 0){
-            if((offset - 55) < ADC_BUFFER[i] && ADC_BUFFER[i] < (offset +55)){
-                secondCrossing = i;
-                secondCorssingFound = 1;
+void calACvals(int offset){
+    int i = 0;
+        int currentVal = 0;
+        int prevVal = 0;
+        int count = 0;
+        int rmsCount = 0;
+        int crossingAxis = 0;
+        //float freq = 0;
+        int Vmax = 0;
+        int Vmin = 100000;
+        int sum = 0;
+        for(i = 1; i < DATA_SIZE; i++){
+            //Freg Calcs
+            prevVal = ADC_BUFFER[i-1];
+            currentVal = ADC_BUFFER[i];
+            if(prevVal <= offset && currentVal > offset){
+                count ++;
+                if(crossingAxis < 4){
+                crossingAxis ++;;//stays on for 1 period
+                }
             }
-            i++;
-    }
-    return secondCrossing - firstCrossing;
-    //int samplesBetweenPeaks = maxIndex2 - maxIndex;
-    //float period = (1/SAMPLING_FREQ) * samplesBetweenPeaks;
-    //int freq = 1/period;
-    //return freq;
-
+            else if(prevVal >= offset && currentVal < offset){
+                count ++;
+            }//end Freq Calcs
+            //Vpp calcs
+            if(i > 100 && currentVal > Vmax){
+                Vmax = currentVal;
+            }
+            else if(i > 100 && currentVal < Vmin){
+                Vmin = currentVal;
+            }//end Vpp Calcs
+            //TrueRMS calcs
+            if(crossingAxis == 2){
+                sum += (currentVal / ONE_MILI_VOLT) * (currentVal / ONE_MILI_VOLT);
+                rmsCount ++;
+            }
+            //end TrueRMS calcs
+         }
+         freq = count/2;
+         //value in ADC terms needs to be converted to voltage
+         //minus 20 to compensate for noise spikes
+         Vpp = Vmax - Vmin - 20;
+         VrmsTrue = 50;
 
 }
+
+//returns frequency of AC input
+float getFreq(void){
+    return freq;
+}
+
+float getVpp(void){
+    return Vpp;
+}
+
+float getVRMS_TRUE(void){
+    return VrmsTrue;
+}
+
+/*int calcFrequency(int offset){
+    int i = 0;
+    int currentVal = 0;
+    int prevVal = 0;
+    int count = 0;
+    float freq = 0;
+    for(i = 1; i < DATA_SIZE; i++){
+        prevVal = ADC_BUFFER[i-1];
+        currentVal = ADC_BUFFER[i];
+        if(prevVal <= offset && currentVal > offset){
+            count ++;
+        }
+        else if(prevVal >= offset && currentVal < offset){
+            count ++;
+        }
+     }
+     return count/2;
+}*/
+
+
 
 //checks if ADC is updated, ADC_UPDATED can be accessed from other files
 int Check_ADC(void){
@@ -145,14 +202,14 @@ void ADC14_IRQHandler(void) {
     //dummy variable used to make else logic take the same amount of time as the else if
     int temp = 0;
 
-    if(count == DATA_SIZE * 2){
+    if(count == DATA_SIZE * 1){
         count = 0;
         ADC_UPDATED = 1;
         ADC_uptate_count ++;
     }
-    else if (count % 2 == 0){
+    else if (count % 1 == 0){
         P3->OUT |= BIT0;
-        ADC_BUFFER[count / 2] = ADC14->MEM[0];
+        ADC_BUFFER[count / 1] = ADC14->MEM[0];
         //ADC_UPDATED = 0;
         count ++;
         P3->OUT &= ~BIT0;
