@@ -9,7 +9,6 @@
 #define ADC_H_
 
 #include "msp.h"
-#include "UART.h"
 #include "delays.h"
 #include <math.h>
 
@@ -18,7 +17,7 @@
 
 #define TEN_MILI_VOLTS 49.3//used to convert ADC_VALUE to a voltage
 #define DATA_SIZE 10000
-#define TIME_TO_FILL_BUFFER 1.028002796
+#define TIME_TO_FILL_BUFFER 1.053
 #define ONE_MILI_VOLT 4.94
 
 //make data size a variable than can be changed by fill buffer
@@ -101,7 +100,7 @@ void calACvals(int offset){
             currentVal = ADC_BUFFER[i];
             if(prevVal <= offset && currentVal > offset){
                 count ++;
-                if(crossingAxis < 4){
+                if(crossingAxis < 150){
                 crossingAxis ++;;//stays on for 1 period
                 }
             }
@@ -116,7 +115,7 @@ void calACvals(int offset){
                 Vmin = currentVal;
             }//end Vpp Calcs
             //TrueRMS calcs
-            if(crossingAxis == 2){
+            if(crossingAxis <= 145){
                 trueSum += (currentVal / ONE_MILI_VOLT) * (currentVal / ONE_MILI_VOLT);
                 calcSum += ((currentVal - offset) / ONE_MILI_VOLT) * ((currentVal - offset) / ONE_MILI_VOLT);
                 rmsCount ++;
