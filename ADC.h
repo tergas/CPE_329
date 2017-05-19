@@ -13,11 +13,12 @@
 #include "delays.h"
 #include <math.h>
 
-#define SAMPLING_FREQ 9311//hz
+#define SAMPLING_FREQ 9727.6
+//9311//hz
 
 #define TEN_MILI_VOLTS 49.3//used to convert ADC_VALUE to a voltage
 #define DATA_SIZE 10000
-#define TIME_TO_FILL_BUFFER 1.073998496
+#define TIME_TO_FILL_BUFFER 1.028002796
 #define ONE_MILI_VOLT 4.94
 
 //make data size a variable than can be changed by fill buffer
@@ -202,14 +203,14 @@ void ADC14_IRQHandler(void) {
     //dummy variable used to make else logic take the same amount of time as the else if
     int temp = 0;
 
-    if(count == DATA_SIZE * 1){
+    if(count == DATA_SIZE * 2){
         count = 0;
         ADC_UPDATED = 1;
         ADC_uptate_count ++;
     }
-    else if (count % 1 == 0){
+    else if (count % 2 == 0){
         P3->OUT |= BIT0;
-        ADC_BUFFER[count / 1] = ADC14->MEM[0];
+        ADC_BUFFER[count / 2] = ADC14->MEM[0];
         //ADC_UPDATED = 0;
         count ++;
         P3->OUT &= ~BIT0;
