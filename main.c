@@ -102,9 +102,6 @@ void main(void)
                 //dcOut = (int)getDCAvg();
 
                 freq = getFreq() / TIME_TO_FILL_BUFFER;
-                freqOut = (int)freq;
-                setFreq();
-                printFreq(freqOut);
                 VPeakToPeak = getVpp() / ONE_MILI_VOLT;
                 p2pOut = (int)VPeakToPeak;
                 setPeak();
@@ -117,6 +114,14 @@ void main(void)
                 rmsCalcOut = (int)VRMSCalc;
                 setCalc();
                 printP2P(rmsCalcOut);
+                if(rmsCalcOut < 10){
+                    freqOut = 0;
+                }
+                else{
+                    freqOut = (int)freq;
+                }
+                setFreq();
+                printFreq(freqOut);
                 setCalcGraph();
                 printCalcGraph(rmsCalcOut);
 
